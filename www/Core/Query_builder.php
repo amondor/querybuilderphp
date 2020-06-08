@@ -26,23 +26,48 @@ class QueryBuilder
         return $this;
     }
 
-    public function from (String  $table, string $alias): QueryBuilder
-    {
+    public function from(string $table, ?string $alias = null): self {
+        if($alias) {
+            $this->from[$alias] = $table;
+        } else {
+            $this->from[] = $table;
+        }
 
+        return $this;
     }
 
-    public function wherre (String $conditions): QueryBuilder
-    {
-
+    public function where(string ...$condition): self {
+        $this->where = array_merge($this->where, $condition);
+        return $this;
     }
 
-    public function setParameter(string $key, string $values):QueryBuilder
-    {
-
+public function count(): int {
+        $this->select('COUNT(id)');
+        return $this->getQuery()->getValueResult();
+    }
+public function getQuery() {
+        $query = $this->__toString();
+        return $this->pdo->query($query);
     }
 
-    public function join(string $table, string $aliasTarget, string $fieldSource - "id", string $fieldTarget = "id"):QueryBuilder
+    public function __toString()
     {
-        
+        $parts = ['SELECT'];
+
+        if($this->select) {
+            $parts[] = join(', ', $this->select);
+        } else {
+            $parts[] = '*';
+        }
+
+        $parts[] = 'FROM';
+        $parts[] = $this->buildFrom();
+
+        if(!empty($this->where)) {
+            $parts[] = 'WHERE';
+            $parts[] = '('. join(') AND (', $this->where) . ')' ;
+        }
+
+        return join(', ', $parts);
     }
 }
